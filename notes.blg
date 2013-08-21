@@ -1,0 +1,49 @@
+This is BibTeX, Version 0.99c (TeX Live 2009)
+The top-level auxiliary file: notes.aux
+The style file: plain.bst
+Database file #1: bib.bib
+Warning--empty year in Catalyurek_hypergraph-partitioningbased
+Warning--empty journal in Condon99algorithmsfor
+Warning--empty journal in tsourakakis2012fennel
+You've used 17 entries,
+            2118 wiz_defined-function locations,
+            613 strings with 7272 characters,
+and the built_in function-call counts, 6217 in all, are:
+= -- 661
+> -- 229
+< -- 5
++ -- 90
+- -- 72
+* -- 425
+:= -- 985
+add.period$ -- 56
+call.type$ -- 17
+change.case$ -- 87
+chr.to.int$ -- 0
+cite$ -- 20
+duplicate$ -- 249
+empty$ -- 501
+format.name$ -- 72
+if$ -- 1338
+int.to.chr$ -- 0
+int.to.str$ -- 17
+missing$ -- 17
+newline$ -- 88
+num.names$ -- 34
+pop$ -- 77
+preamble$ -- 1
+purify$ -- 70
+quote$ -- 0
+skip$ -- 194
+stack$ -- 0
+substring$ -- 487
+swap$ -- 66
+text.length$ -- 5
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 68
+warning$ -- 3
+while$ -- 68
+width$ -- 19
+write$ -- 196
+(There were 3 warnings)
