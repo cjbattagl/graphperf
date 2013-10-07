@@ -1,0 +1,94 @@
+\documentclass[11pt]{article}
+
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{cite}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{todonotes}
+\usepackage{url}
+
+\usepackage{listings}
+ \lstset{
+            language=Matlab,                                % choose the language of the code
+    %       basicstyle=10pt,                                % the size of the fonts that are used for the code
+            numbers=left,                                   % where to put the line-numbers
+            numberstyle=\footnotesize,                      % the size of the fonts that are used for the line-numbers
+            stepnumber=1,                                           % the step between two line-numbers. If it's 1 each line will be numbered
+            numbersep=5pt,                                  % how far the line-numbers are from the code
+    %       backgroundcolor=\color{white},          % choose the background color. You must add \usepackage{color}
+            showspaces=false,                               % show spaces adding particular underscores
+            showstringspaces=false,                         % underline spaces within strings
+            showtabs=false,                                         % show tabs within strings adding particular underscores
+    %       frame=single,                                           % adds a frame around the code
+    %       tabsize=2,                                              % sets default tabsize to 2 spaces
+    %       captionpos=b,                                           % sets the caption-position to bottom
+            breaklines=true,                                        % sets automatic line breaking
+            breakatwhitespace=false,                        % sets if automatic breaks should only happen at whitespace
+            escapeinside={\%*}{*)}                          % if you want to add a comment within your code
+}
+
+\setlength{\paperwidth}{8.5in}
+\setlength{\paperheight}{11in}
+\setlength{\voffset}{-0.2in}
+\setlength{\topmargin}{0in}
+\setlength{\headheight}{0in}
+\setlength{\headsep}{0in}
+\setlength{\footskip}{30pt}
+\setlength{\textheight}{9.25in}
+\setlength{\hoffset}{0in}
+\setlength{\oddsidemargin}{0in}
+\setlength{\textwidth}{6.5in}
+\setlength{\parindent}{0in}
+\setlength{\parskip}{9pt}
+
+\newcommand{\ben}{\begin{enumerate}}
+\newcommand{\een}{\end{enumerate}}
+
+\DeclareGraphicsRule{.JPG}{eps}{*}{`jpeg2ps #1}
+
+\title{Linear-Algebraic Operations on Evolving Graphs}
+%\author{Casey Battaglino}
+\date{}
+\begin{document}
+\maketitle
+%\tableofcontents
+
+\section{Breadth-First Traversal for SSSP}
+
+Given a graph $G$ with adjacency matrix $A \in \mathbb{R^{(N \times N)}}$ and vector $x_0$ in $\mathbb{R^N}$, consider the problem of computing a shortest path from start vertex $s$ using a breadth-first traversal. Vector $x_0$ will thus have a 1 in position $s$ and zeros in all other positions. A single frontier-expansion of the traversal involves computing $x_{i+1} = Ax_i$ in the $(min,+)$-ring. This recurrence can be expressed in closed form as $x_{i+1} = A^i x_0$.
+
+A standard storage format for sparse matrices is Compressed Sparse Row (CSR) or Compressed Sparse Column (CSC). Insertion of edges into this format is difficult because nonzeros are stored in a compact column- or row-index array. Thus we demonstrate how to handle an evolving graph algebraically with an update matrix. 
+
+\subsection{Vertex, Edge Insertion}
+Consider the case where we have some set of vertices $V'$ and edges $E'$ to add to the graph $(G' \gets G \cap \{V',E'\})$. These are formed as a matrix update, such that the updated graph $A'$ is represented by $A' \gets A + A_u$, although we may put off computing $A'$ to avoid the cost of re-forming the matrix for small updates.
+
+To deal with vertex insertion, we must simply ensure all matrices to be in $\mathbb{R}^{(N+|V'|)\times(N+|V'|)}$, and $x \in \mathbb{R}^{(N+|V'|)}$. This is trivial even for $A$, because we can simply append $|V'|$ row or column pointers to the CSR/CSC representation.
+
+Finally, we construct $A_u$ with a nonzero in every entry $(i,j)$ for each new edge between vertices $i$ and $j$. Our new BFS step is thus $x_{i+1} = (A+A_u)x_i = Ax_i + A_ux_i = (A+A_u)^ix_0$.
+
+Any shortest-path vectors computed for $A$ must be recomputed from the beginning, because there is no trivial way to compute $(A+A_u)^i$ from $A^i$.
+
+\subsection{Vertex, Edge Deletion}
+Vertex deletion can be handled by deleting all edges in its row and column, and edge deletion by setting the corresponding nonzero in $A$ to 0. In the long-term $A$ should be consolidated, as this can be considered a memory leak. 
+
+\subsection{Consolidation}
+We consider the cost of combining $A+A_u$ into a single representation, in contrast to computing $Ax_i + A_ux_i$ over a particular number of iterations to give insight into when we should consolidate. 
+
+A rule-of-thumb would be that we should consolidate when the following cost inequality is satisfied for some $k$: \begin{align} flops(A'\gets A + A_u) + flops(\sum_{i=0}^k A'x_i) \leq \sum_{i=0}^k flops(Ax_i + A_ux_i)\end{align}
+
+Addition of CSR matrices can be computed by allocating $2(nnz(A)+nnz(A_u)) + N$ memory, and then performing a merge operation on the $\{CI,NZ\}$ tuples.  
+
+
+
+%\begin{figure}
+%\label{rpls}
+%\center \includegraphics*[width=5in]{mat.png}
+%\end{figure}
+
+\bibliographystyle{plain}
+\bibliography{bib}
+
+
+\end{document}
