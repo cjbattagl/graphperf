@@ -46,6 +46,11 @@ Anne Condon and Richard~M. Karp.
 \newblock Algorithms for graph partitioning on the planted partition model.
 \newblock 18:116--140, 1999.
 
+\bibitem{journals/cj/GanleyH94}
+Joseph~L. Ganley and Lenwood~S. Heath.
+\newblock Optimal and random partitions of random graphs.
+\newblock {\em Comput. J.}, 37(7):641--643, 1994.
+
 \bibitem{goemans1995improved}
 Michel~X Goemans and David~P Williamson.
 \newblock Improved approximation algorithms for maximum cut and satisfiability
@@ -99,5 +104,12 @@ Charalampos~E Tsourakakis, Christos Gkantsidis, Bozidar Radunovic, and Milan
 Duncan~J. Watts and Steven~H. Strogatz.
 \newblock Collective dynamics of {'}small-world{'} networks.
 \newblock {\em Nature}, 393(6684):440--442, June 1998.
+
+\bibitem{Yuan:2012:MLG:2410141.2410574}
+Liang Yuan, Chen Ding, Daniel \AA~tefankovic, and Yunquan Zhang.
+\newblock Modeling the locality in graph traversals.
+\newblock In {\em Proceedings of the 2012 41st International Conference on
+  Parallel Processing}, ICPP '12, pages 138--147, Washington, DC, USA, 2012.
+  IEEE Computer Society.
 
 \end{thebibliography}

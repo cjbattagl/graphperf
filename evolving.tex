@@ -8,6 +8,8 @@
 \usepackage{algorithm}
 \usepackage{todonotes}
 \usepackage{url}
+\usepackage{tikz}
+\usetikzlibrary{arrows}
 
 \usepackage{listings}
  \lstset{
@@ -49,7 +51,7 @@
 \DeclareGraphicsRule{.JPG}{eps}{*}{`jpeg2ps #1}
 
 \title{Linear-Algebraic Operations on Evolving Graphs}
-%\author{Casey Battaglino}
+\author{Casey Battaglino}
 \date{}
 \begin{document}
 \maketitle
@@ -60,22 +62,37 @@
 Given a graph $G$ with adjacency matrix $A \in \mathbb{R^{(N \times N)}}$, consider the problem of computing a shortest path from start vertex $s$ using a breadth-first traversal. 
 
 \subsection{Min-Plus Algebra}
-Consider the $(\min,+)$-semi-ring, also known as the tropical ring: $(\mathbb{R} \cup \{\infty\},\min,+,\infty,0)$. The operations are thus assigned $\oplus \gets \min$ and $\otimes \gets +$. Matrix multiplication is thus defined as \begin{align}Ax = \bigoplus_j a_{ij} \otimes x_j = \min_j\{a_{ij}+x_j\}\end{align}
+Consider the $\min,+$ semi-ring, also known as the tropical ring: $(\mathbb{R} \cup \{\infty\},\min,+,\infty,0)$. The operations are thus assigned $\oplus \gets \min$ and $\otimes \gets +$. Matrix-vector multiplication is thus defined as \begin{align}Ax = \bigoplus_j a_{ij} \otimes x_j = \min_j\{a_{ij}+x_j\}\end{align}
 
 In a step of the Bellman-Ford SSSP algorithm, we wish to have a vector which contains the computed distances from the source vertex to visited vertices. The initial state is:
 
-\begin{align}\vec{x_0} = \bordermatrix{ 
+\begin{align}x_0^T = \bordermatrix{ 
 & & & & s&  \cr
 & \infty, & \infty, & \cdots & 0,& \cdots &\infty \cr
 } \end{align}
 
 The incidence matrix will contain a weight value for each edge in $G$, 0 for each diagonal element, and $\infty$ for each absent edge.
 
-\begin{align}\begin{bmatrix}
-& 0 & w_{12} & w_{13}  \cr
-& \infty & 0 &  \infty   \cr
-& \infty& w_{32} & 0   
-\end{bmatrix} \end{align}
+
+\begin{align*}
+\begin{bmatrix}
+0 & w_{12} & w_{13}  \cr
+w_{21} & 0 &  \infty   \cr
+\infty& w_{32} & 0   
+\end{bmatrix}\end{align*}
+
+\begin{align*}
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=3cm,
+thick,main node/.style={circle,draw,font=\sffamily\Large\bfseries}]
+  \node[main node] (1) {1};
+  \node[main node] (2) [below left of=1] {2};
+  \node[main node] (3) [below right of=1] {3};
+  \path[every node/.style={font=\sffamily\small}]
+    (1) edge node [left] {$w_{13}$} (3)
+        edge [bend left] node[left] {$w_{12}$} (2)
+    (2) edge [bend left] node {$w_{21}$} (1)
+    (3) edge node {$w_{32}$} (2);
+\end{tikzpicture}\end{align*}
 
 Following Algebraic Bellman Ford, a single frontier-expansion of the traversal involves computing $x_{i+1} = Ax_i$ \cite{Gazit198861,citeulike:10648615}. This recurrence can be expressed in closed form as $x_{i+1} = (A)^i x_0$.
 
@@ -104,17 +121,23 @@ In the case that the matrix updates often, we may not want to compute $A'$. In t
 
 Any shortest-path vectors already computed for $A$ must be recomputed from the beginning, because there is no trivial way to compute $(A+A_u)^i$ from $A^i$.
 
-
-
 \subsection{Vertex, Edge Deletion}
 Vertex deletion can be handled by deleting all edges in its row and column, and edge deletion by setting the corresponding nonzero in $A$ to 0. In the long-term $A$ should be consolidated, as this can be considered a memory leak. 
 
 \subsection{Consolidation}
 We consider the cost of combining $A+A_u$ into a single representation, in contrast to computing $Ax_i + A_ux_i$ over a particular number of iterations to give insight into when we should consolidate. 
 
-A rule-of-thumb would be that we should consolidate when the following cost inequality is satisfied for some $k$: \begin{align} flops(A'\gets A + A_u) + flops(\sum_{i=0}^k A'x_i) \leq \sum_{i=0}^k flops(Ax_i + A_ux_i)\end{align}
+A rule-of-thumb would be that we should consolidate when the following cost inequality is satisfied: \begin{align} flops(A + A_u) + \sum_{i=0}^N flops( A'x_i) \leq \sum_{i=0}^N [flops(Ax_i) + flops(A_ux_i)]\end{align}
 
-Addition of CSR matrices can be computed by allocating $2(nnz(A)+nnz(A_u)) + N$ memory, and then performing a merge operation on the $\{CI,NZ\}$ tuples.  
+
+
+\begin{align*}
+\text{operation} && \text{flops} && \text{bytes} \\
+A+A_u && 2(|E(A)|+|E(A_u)|) && (12ánnz +4á(n+1) +8á(n \cdots nnz) + 8án) \\
+A'x_i && 2(|E(A)|+|E(A_u)|) \\
+Ax_ i && 2 |E(A)| \\
+A_ux_i && 2|E(A_u)|
+\end{align*}
 
 
 

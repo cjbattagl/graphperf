@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009) (format=pdflatex 2009.11.7)  21 AUG 2013 15:33
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009) (format=pdflatex 2009.11.7)  9 OCT 2013 02:42
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -508,7 +508,7 @@ File: umsb.fd 2009/06/22 v3.00 AMS symbols B
 \openout4 = `notes.toc'.
 
 
-[2] [3] (./indset.m
+[2] [3] [4] (./indset.m
 LaTeX Font Info:    Try loading font information for OMS+cmr on input line 2.
 
 (/usr/local/texlive/2009/texmf-dist/tex/latex/base/omscmr.fd
@@ -524,12 +524,12 @@ File: omlcmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 LaTeX Font Info:    Font shape `OML/cmr/m/n' in size <10.95> not available
 (Font)              Font shape `OML/cmm/m/it' tried instead on input line 4.
 ) (./peerpress.m)
-[4] [5] (./notes.bbl [6]) [7] (./notes.aux) ) 
+[5] [6] (./notes.bbl [7]) [8] (./notes.aux) ) 
 Here is how much of TeX's memory you used:
- 10795 strings out of 493848
- 178153 string characters out of 3149207
- 296969 words of memory out of 3000000
- 13845 multiletter control sequences out of 15000+200000
+ 10797 strings out of 493848
+ 178207 string characters out of 3149207
+ 295574 words of memory out of 3000000
+ 13847 multiletter control sequences out of 15000+200000
  12165 words of font info for 46 fonts, out of 3000000 for 9000
  714 hyphenation exceptions out of 8191
  54i,6n,72p,352b,1756s stack positions out of 5000i,500n,10000p,200000b,50000s
@@ -546,9 +546,9 @@ public/amsfonts/cm/cmr9.pfb></usr/local/texlive/2009/texmf-dist/fonts/type1/pub
 lic/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2009/texmf-dist/fonts/type1/publ
 ic/amsfonts/cm/cmsy8.pfb></usr/local/texlive/2009/texmf-dist/fonts/type1/public
 /amsfonts/cm/cmti10.pfb>
-Output written on notes.pdf (7 pages, 173204 bytes).
+Output written on notes.pdf (8 pages, 175378 bytes).
 PDF statistics:
- 77 PDF objects out of 1000 (max. 8388607)
+ 80 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  13 words of extra memory for PDF output out of 10000 (max. 10000000)
 
