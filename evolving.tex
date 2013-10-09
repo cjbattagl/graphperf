@@ -57,10 +57,10 @@
 
 \section{Breadth-First Traversal for SSSP}
 
-Given a graph $G$ with adjacency matrix $A \in \mathbb{R^{(N \times N)}}$ and vector $x_0$ in $\mathbb{R^N}$, consider the problem of computing a shortest path from start vertex $s$ using a breadth-first traversal. 
+Given a graph $G$ with adjacency matrix $A \in \mathbb{R^{(N \times N)}}$, consider the problem of computing a shortest path from start vertex $s$ using a breadth-first traversal. 
 
 \subsection{Min-Plus Algebra}
-Consider the $(\min,+)$-semi-ring, also known as the tropical ring: $(\mathbb{R} \cup \{\infty\},\min,+,\infty,0)$. This means that $\oplus \gets \min$ and $\otimes \gets +$. Matrix multiplication is thus defined as \begin{align}Ax = \bigoplus_j a_{ij} \otimes x_j = \min_j\{a_{ij}+x_j\}\end{align}
+Consider the $(\min,+)$-semi-ring, also known as the tropical ring: $(\mathbb{R} \cup \{\infty\},\min,+,\infty,0)$. The operations are thus assigned $\oplus \gets \min$ and $\otimes \gets +$. Matrix multiplication is thus defined as \begin{align}Ax = \bigoplus_j a_{ij} \otimes x_j = \min_j\{a_{ij}+x_j\}\end{align}
 
 In a step of the Bellman-Ford SSSP algorithm, we wish to have a vector which contains the computed distances from the source vertex to visited vertices. The initial state is:
 
@@ -77,18 +77,22 @@ The incidence matrix will contain a weight value for each edge in $G$, 0 for eac
 & \infty& w_{32} & 0   
 \end{bmatrix} \end{align}
 
-Following Algebraic Bellman Ford, a single frontier-expansion of the traversal involves computing $x_{i+1} = Ax_i$. This recurrence can be expressed in closed form as $x_{i+1} = A^i x_0$.
+Following Algebraic Bellman Ford, a single frontier-expansion of the traversal involves computing $x_{i+1} = Ax_i$ \cite{Gazit198861,citeulike:10648615}. This recurrence can be expressed in closed form as $x_{i+1} = (A)^i x_0$.
 
 A standard storage format for sparse matrices is Compressed Sparse Row (CSR) or Compressed Sparse Column (CSC). The $\infty$ and 0 values of the incidence matrix can be safely ignored by this representation and the algebraic product will still compute the distance vector, thus we need only $O(|E|)$ storage.
 
 Insertion of edges into CSC or CSR format is difficult because nonzeros are stored in a compact column- or row-index array. Thus we demonstrate how to handle an evolving graph algebraically with an update matrix. 
 
 \subsection{Vertex, Edge Insertion}
-Consider the case where we have some set of vertices $V'$ and edges $E'$ to add to the graph $(G' \gets G \cap \{V',E'\})$. These are formed as a matrix update, such that the updated graph $A'$ is represented by $A' \gets A + A_u$, although we may put off computing $A'$ to avoid the cost of re-forming the matrix for small updates.
+Consider the case where we have some set of vertices $V'$ and edges $E'$ to add to the graph $(G' \gets G \cap \{V',E'\})$. These are formed as a matrix update, such that the updated graph $A'$ is represented by $A' \gets A + A_u$. Note that matrix addition in this semi-ring is the element-wise $\min$ operation.
 
-To deal with vertex insertion, we must simply ensure all matrices to be in $\mathbb{R}^{(N+|V'|)\times(N+|V'|)}$, and $x \in \mathbb{R}^{(N+|V'|)}$. This is trivial even for $A$, because we can simply append $|V'|$ row or column pointers to the CSR/CSC representation.
+In the case that the matrix updates often, we may not want to compute $A'$. In this case, we can maintain $A_u$ as a more dynamic data structure, such as unordered or ordered triples, either of which has $O(nnz(A_u))$ cache complexity for SpMV. \cite{sparsechapter}.
 
-Finally, we construct $A_u$ with a nonzero in every entry $(i,j)$ for each new edge between vertices $i$ and $j$. If we anticipate small, frequent updates, $A_u$ should be represented in unordered triplet format. Our new BFS step is thus $x_{i+1} = (A+A_u)x_i = Ax_i + A_ux_i = (A+A_u)^ix_0$. Here, vector addition is the element-wise $\min$ function.
+\begin{enumerate}
+\item To deal with vertex insertion, we must simply ensure that $A,A_u \in \mathbb{R}^{(N+|V'|)\times(N+|V'|)}$, and $x \in \mathbb{R}^{(N+|V'|)}$. This is trivial even for $A$, because we can simply append $|V'|$ row or column pointers to the CSR/CSC representation.
+
+\item Finally, we construct $A_u$ with a nonzero in every entry $(i,j)$ for each new edge between vertices $i$ and $j$. If we anticipate small, frequent updates, $A_u$ should be represented in unordered triplet format. Our new BFS step is thus $x_{i+1} = (A+A_u)x_i = Ax_i + A_ux_i = (A+A_u)^ix_0$. 
+\end{enumerate}
 
 \begin{align}\bordermatrix{ 
 & & & j&  \cr
