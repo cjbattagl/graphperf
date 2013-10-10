@@ -5,6 +5,7 @@
 \usepackage{graphicx}
 \usepackage{cite}
 \usepackage{algorithmic}
+\usepackage{relsize}
 \usepackage{algorithm}
 \usepackage{todonotes}
 \usepackage{url}
@@ -127,7 +128,7 @@ Vertex deletion can be handled by deleting all edges in its row and column, and 
 \subsection{Consolidation}
 We consider the cost of combining $A+A_u$ into a single representation, in contrast to computing $Ax_i + A_ux_i$ over a particular number of iterations to give insight into when we should consolidate. 
 
-A rule-of-thumb would be that we should consolidate when the following cost inequality is satisfied: \begin{align} flops(A + A_u) + \sum_{i=0}^N flops( A'x_i) \leq \sum_{i=0}^N [flops(Ax_i) + flops(A_ux_i)]\end{align}
+A rule-of-thumb would be that we should consolidate when the following cost inequality is satisfied: \begin{align} cost(A + A_u) + \sum_{i=0}^N cost( A'x_i) \leq \sum_{i=0}^N [cost(Ax_i) + cost(A_ux_i)]\end{align}
 
 
 
