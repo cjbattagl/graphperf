@@ -64,6 +64,12 @@ Given a graph $G$ with adjacency matrix $A \in \mathbb{R^{(N \times N)}}$, a fro
 
 If $A$ is represented in CSR format, the number of flops required is $2 \times nnz(A)$. However, only those rows in $A$ that correspond to nonzero indices in $x$ need be loaded from memory. 
 
+\subsection{Replacement Policies}
+\cite{Dan:1990:AAL:98457.98525}
+
+\subsection{Tuning}
+\cite{Xia_topologicallyadaptive}
+
 \subsection{Cache Model}
 When a row is loaded from memory, its nonzeros are stored in cache according to some cache policy. Assume for now that we are computing on a single core with multiple levels of cache. After a particular traversal step $i$, we can imagine a permutation $p_i \in \Sigma_n$ that orders the rows of $A$ in the order in which they are stored in cache. 
 
