@@ -51,8 +51,8 @@
 
 \DeclareGraphicsRule{.JPG}{eps}{*}{`jpeg2ps #1}
 
-\title{Linear-Algebraic Operations on Evolving Graphs}
-\author{Casey Battaglino}
+\title{Matrix SSSP on an Evolving Graph}
+%\author{Casey Battaglino}
 \date{}
 \begin{document}
 \maketitle
@@ -65,7 +65,7 @@ Given a graph $G$ with adjacency matrix $A \in \mathbb{R^{(N \times N)}}$, consi
 \subsection{Min-Plus Algebra}
 Consider the $\min,+$ semi-ring, also known as the tropical ring: $(\mathbb{R} \cup \{\infty\},\min,+,\infty,0)$. The operations are thus assigned $\oplus \gets \min$ and $\otimes \gets +$. Matrix-vector multiplication is thus defined as \begin{align}Ax = \bigoplus_j a_{ij} \otimes x_j = \min_j\{a_{ij}+x_j\}\end{align}
 
-In a step of the Bellman-Ford SSSP algorithm, we wish to have a vector which contains the computed distances from the source vertex to visited vertices. The initial state is:
+In a step of the Dijkstra SSSP algorithm, we wish to have a vector which contains the computed distances from the source vertex to visited vertices. The initial state is:
 
 \begin{align}x_0^T = \bordermatrix{ 
 & & & & s&  \cr
@@ -95,7 +95,7 @@ thick,main node/.style={circle,draw,font=\sffamily\Large\bfseries}]
     (3) edge node {$w_{32}$} (2);
 \end{tikzpicture}\end{align*}
 
-Following Algebraic Bellman Ford, a single frontier-expansion of the traversal involves computing $x_{i+1} = Ax_i$ \cite{Gazit198861,citeulike:10648615}. This recurrence can be expressed in closed form as $x_{i+1} = (A)^i x_0$.
+Following Algebraic Dijkstra, a single frontier-expansion of the traversal involves computing $x_{i+1} = Ax_i$ \cite{Gazit198861,citeulike:10648615}. This recurrence can be expressed in closed form as $x_{i+1} = (A)^i x_0$.
 
 A standard storage format for sparse matrices is Compressed Sparse Row (CSR) or Compressed Sparse Column (CSC). The $\infty$ and 0 values of the incidence matrix can be safely ignored by this representation and the algebraic product will still compute the distance vector, thus we need only $O(|E|)$ storage.
 
