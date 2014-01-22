@@ -47,8 +47,8 @@
 This document presents one section for each topic I've been exploring. Each section is structured as follows:
 \begin{enumerate}
 \item \textbf{Overview}: A concise introduction to existing work on the topic, references, and motivation.
+\item \textbf{Results / Implementation}: Any original experiments, tests, visualizations, and implementations related to the topic.
 \item \textbf{Thoughts}: Any original musings or ideas on extending the existing work.
-\item \textbf{Results / Implementation}: Any original experiments, tests, visualizations, and implementations related to the topic
 \end{enumerate}
 
 The main topics (sections) are as follows:
@@ -86,13 +86,6 @@ $w(t,i)=1-\exp\{|P^t(i)|-C\} $for exponentially weighted
 This heuristic proves surprisingly effective for scale-free graphs, and can be competitive with leading offline implementations such as METIS, while operating at a much faster speed. The low diameter of scale-free graphs seems to make them easier to partition in this way (because as we process more and more nodes, the chance that an incoming node has neighbors that have already been partitioned becomes very high. This is not true for spatial, structured graphs). 
 
 Partitioning a 26GB Twitter follower graph can take nearly a day using METIS, but can take a matter of minutes using a streaming algorithm, with similar partition quality~\cite{tsourakakis2012fennel}. 
-
-\subsection{Thoughts}
-An initial idea that Robert Pienta and I came up with was to \textit{re-stream} the partitioning: first, we do a single pass over the nodes, and then we do a second pass, re-assigning nodes to partitions that they have more neighbors to. We could do multiple passes of a streaming partitioner (using the same or different heuristics) to further improve the partitioning, all in a fraction of the time that an offline partitioner would take to terminate.  This turned out to be remarkably convergent and effective: after 4 passes, we had improved partition quality from the baseline (1 pass) by a factor of 2-3. Unfortunately, I discovered a paper that implemented this, after we had already done our own implementation~\cite{Nishiura13}.
-
-\warning{Make graph of node-degree cutoff vs partition quality}
-
-\warning{Show re-streaming quality increase}
 
 \subsection{Results / Implementation}
 \subsubsection{Shared-Memory Streaming Partitioner}
@@ -176,28 +169,57 @@ As far as I can tell this is the first distributed implementation of streaming p
 
 \warning{TODO: Benchmark this partitioner within several BFS-intensive kernels on a NERSC machine}
 
-\subsubsection{Re-streaming Results}
+\subsubsection{Re-streaming Partitioning}
+An initial idea that Robert Pienta and I came up with was to \textit{re-stream} the partitioning: first, we do a single pass over the nodes, and then we do a second pass, re-assigning nodes to partitions that they have more neighbors to. We could do multiple passes of a streaming partitioner (using the same or different heuristics) to further improve the partitioning, all in a fraction of the time that an offline partitioner would take to terminate.  This turned out to be remarkably convergent and effective: after 4 passes, we had improved partition quality from the baseline (1 pass) by a factor of 2-5 (see Fig.~\ref{fig:03}). Unfortunately, I discovered a paper that implemented this, after we had already done our own implementation~\cite{Nishiura13}.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.70] {figures/litreview/2partfrac}
+\caption[Caption for]{Fraction Improvement in $\lambda$ after 5 WDG passes, $k=2$.}
+\label{fig:03}
+\end{figure}
+
+\warning{Is there an algorithm that traverses a graph multiple times, where it would be worthwhile to `repartition' and distribute visited vertices in real-time?}
 
 \subsubsection{Sampling Streaming Partitioning}
-I implemented a sampling streaming partitioning scheme that randomly samples some percentage of the edges adjacent to any given node. While the quality of the partitions appeared to be fairly stable, there are two issues that made me decide not to do any further experimentation:
+I implemented a sampling streaming partitioning scheme that randomly samples some percentage of the edges adjacent to any given node, instead of computing the greedy heuristic with \textit{all} neighbors. While the quality of the partitions appeared to be fairly stable, there are two issues that made me decide not to do any further experimentation:
 
 \begin{enumerate}
 \item The speed benefit was not very large (only 1.2-1.3 times faster), due to unstrided accesses. 
 \item Since we're streaming the entire graph, we're already going over all of the nnz's, so there's not really any loss in considering all edges. \end{enumerate}
 
-I guess it's not unthinkable that we'd find some scenario where this would be worthwhile approach, though.
+I guess it's not unthinkable that to find some scenario where this would be worthwhile.
 
+\subsection{Thoughts}
+Ideally we could release the distributed-memory streaming partitioner as a light-weight, open-source package that people could play with / extend, and use in their computations (in place of a heavier partitioner such as METIS). 
+
+There are a couple of things left to do: 
+\begin{enumerate}
+\item Actually implement support for streaming rather than reading in nodes all at once (this does not change algorithm).
+\item Decide if the given input formats (MM / MAT / HB) are acceptable, as well as including the Sparse Matrix Converter as a library.
+\item Consider support for parallel file systems.
+\end{enumerate}
+
+I think there would be a massive appeal in showing that streaming graph partitioning has a `killer application,' i.e could be used to accelerate a large computation in industry. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Sec2
 
 
 \newpage \section{Optimizing Distributed Scale-Free Graph Traversals}
+\subsection{Overview}
+Graph partitioning is already widely used to improve locality of computations, and a wide variety of methods exist~\cite{DBLP:journals/corr/BulucMSSS13}. 
+
 Goal: a communication pattern that optimizes distributed graph traversals.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Sec3
 
 \newpage \section{Formalizing Characteristics of Graph Traversals}
+\subsection{Overview}
+
+\subsection{Thoughts}
+
+\subsection{Results}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Sec4
 
@@ -205,9 +227,14 @@ Goal: a communication pattern that optimizes distributed graph traversals.
 
 \warning{Approximate graph algorithms (sampling) -- power-reduction}
 
+\warning{Compact representations of graphs: entropy?}
+
 
 \newpage \section{TODO}
-\warning{TODO: Benchmark distributed partitioner within several BFS-intensive kernels on a NERSC machine}
+\begin{enumerate}
+\item Benchmark distributed streaming partitioner within several BFS-intensive kernels on a NERSC machine.
+\item
+\end{enumerate}
 
 
 \bibliographystyle{plain}
