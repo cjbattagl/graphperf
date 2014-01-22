@@ -1,0 +1,57 @@
+\documentclass[11pt]{article}
+\usepackage[table]{xcolor}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{cite}
+%\usepackage{algorithmic}
+%\usepackage{algorithm}
+\usepackage{todonotes}
+\usepackage{url}
+\usepackage{xparse}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{subcaption}
+
+\setlength{\paperwidth}{8.5in}
+\setlength{\paperheight}{11in}
+\setlength{\voffset}{-0.2in}
+\setlength{\topmargin}{0in}
+\setlength{\headheight}{0in}
+\setlength{\headsep}{0in}
+\setlength{\footskip}{30pt}
+\setlength{\textheight}{9.25in}
+\setlength{\hoffset}{0in}
+\setlength{\oddsidemargin}{0in}
+\setlength{\textwidth}{6.5in}
+\setlength{\parindent}{0in}
+\setlength{\parskip}{9pt}
+
+\newcommand{\ben}{\begin{enumerate}}
+\newcommand{\een}{\end{enumerate}}
+\newcommand\warning[1]{\textcolor{red}{#1}}
+
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareGraphicsRule{.JPG}{eps}{*}{`jpeg2ps #1}
+
+\title{Graph Metrics / Applications --- Notes}
+\author{Casey Battaglino}
+%\date{}
+\begin{document}
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Introduction
+
+\section{Locality in Social Networks}
+
+Let $\{u,v,w\}$ be nodes in a graph. If edges $\{u,v\}, \{v,w\}$ exist, does $\{u,w\}$ have a higher probability of existing?
+
+\section{Distance Measures of Social Networks}
+
+
+
+\bibliographystyle{plain}
+\bibliography{bib}
+
+
+\end{document}
