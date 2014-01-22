@@ -1,0 +1,5 @@
+Jan 22 2014
+-------
+Better communication volume metric? Hypergraph?
+Does randomization vs. crawl simulation matter
+
