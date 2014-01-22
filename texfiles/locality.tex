@@ -64,8 +64,11 @@ Given a graph $G$ with adjacency matrix $A \in \mathbb{R^{(N \times N)}}$, a fro
 
 If $A$ is represented in CSR format, the number of flops required is $2 \times nnz(A)$. However, only those rows in $A$ that correspond to nonzero indices in $x$ need be loaded from memory. 
 
+\subsection{}
+Locate BFS optimization models along a spectrum of run-time-conscious $\to$ theory-conscious. (Iteratively optimizing bottlenecks vs. attempting to minimize theoretical 
+
 \subsection{Replacement Policies}
-\cite{Dan:1990:AAL:98457.98525}
+The LRU buffer replacement strategy is described as a stack in~\cite{Dan:1990:AAL:98457.98525}, where a requested item not found in the stack is moved to the top of the stack, and the least recently used item (the bottom of the stack), is removed. If an item is requested that is in the stack, it is removed from the stack and placed at the top. 
 
 \subsection{Tuning}
 \cite{Xia_topologicallyadaptive}

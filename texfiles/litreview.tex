@@ -1,14 +1,17 @@
 \documentclass[11pt]{article}
-
+\usepackage[table]{xcolor}
 \usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage{graphicx}
 \usepackage{cite}
-\usepackage{algorithmic}
-\usepackage{algorithm}
+%\usepackage{algorithmic}
+%\usepackage{algorithm}
 \usepackage{todonotes}
 \usepackage{url}
-\usepackage{xcolor}
+\usepackage{xparse}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{subcaption}
 
 \setlength{\paperwidth}{8.5in}
 \setlength{\paperheight}{11in}
@@ -26,58 +29,185 @@
 
 \newcommand{\ben}{\begin{enumerate}}
 \newcommand{\een}{\end{enumerate}}
-
-
 \newcommand\warning[1]{\textcolor{red}{#1}}
 
+\DeclareMathOperator*{\argmax}{arg\,max}
 \DeclareGraphicsRule{.JPG}{eps}{*}{`jpeg2ps #1}
 
 \title{Research Review}
 \author{Casey Battaglino}
-\date{}
+%\date{}
 \begin{document}
 \maketitle
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Introduction
+
 \section{Introduction}
 
-I have structured this document as follows: each section presents a particular topic I've been exploring. I begin with an overview that covers some of the basic work that's been done on the subject. Then I have a `thoughts' section that introduces some of my thoughts on the matter. Then I have an `analysis' section that discusses any original experiments, tests, visualizations, and implementations that I've done related to the topic. 
+This document presents one section for each topic I've been exploring. Each section is structured as follows:
+\begin{enumerate}
+\item \textbf{Overview}: A concise introduction to existing work on the topic, references, and motivation.
+\item \textbf{Thoughts}: Any original musings or ideas on extending the existing work.
+\item \textbf{Results / Implementation}: Any original experiments, tests, visualizations, and implementations related to the topic
+\end{enumerate}
 
-\section{Distributed-Memory (Re-)Streaming Graph Partitioning}
+The main topics (sections) are as follows:
 
+\begin{enumerate}
+\item \textbf{Distributed-Memory (Re-)Streaming Graph Partitioning}: Exploring streaming partitioning, implementing re-streaming partitioning (and then discovering it's already been done), implementing a shared-memory and distributed-memory streaming partitioner, discussion of quality of partitions. 
+\item \textbf{Optimizing Distributed Scale-Free Graph Traversals}: Exploring a scheme for distributed-memory graph traversals that involves low-degree and high-degree nodes in different communication patterns (and leveraging the fact that low-degree nodes can be partitioned, in isolation, at much higher quality, for scale-free graphs). 
+\item \textbf{Formalizing Characteristics of Graph Traversals}: Leveraging statistical qualities of random graph models to quantify the performance of algorithms operating upon them. 
+\item \textbf{Other Open Questions}: Other thoughts and possible directions.
+\end{enumerate}
+
+Finally, I reiterate over the main ``TODO'' points, which we can prioritize and add to as we see fit. 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Sec1
+
+
+\newpage \section{Distributed-Memory (Re-)Streaming Graph Partitioning}
 \subsection{Overview}
-
-Offline graph partitioning algorithms, where the graph is allowed to exist in memory with total information about edges, have existed for decades. Hundreds of variants of such algorithms now exist, and range from spatial methods~\cite{Gilbert95geometricmesh} to spectral methods~\cite{arora2009expander}. The most scalable and effective graph partitioners on massive datasets are currently multi-level partitioners, which recursively contract the graph to a small number of vertices, and then heuristically optimize the problem on each subsequent expansion~\cite{karypis1998multilevel}. 
-
 Streaming graph partitioning has only been introduced in the last couple of years~\cite{DBLP:journals/corr/abs-1212-1121,Stanton:2012:SGP:2339530.2339722,tsourakakis2012fennel}, as graphs grow to the point where they may not fit into memory, or must be distributed to compute nodes on the fly. In the streaming model, input data (vertices) arrive sequentially from a generating source (such as a web-crawler), and must be partitioned as they arrive.
 
-The generated partitions are dependent on the order in which vertices are processed. For instance, a web crawler might generate vertices in an order that represents a Breadth-First or Depth-First traversal of the web, or we may receive vertices in a random order. An analysis of streaming algorithms may also consider an adversarial ordering that produces the worst possible results~\cite{Stanton:2012:SGP:2339530.2339722}.
+The order in which vertices are processed determines the final partition assignment. For instance, a web crawler might generate vertices in an order that corresponds to a Breadth-First or Depth-First traversal of the web, or we may receive vertices in a random order. An analysis of streaming algorithms may also consider an \textit{adversarial} ordering that produces the worst possible results~\cite{Stanton:2012:SGP:2339530.2339722}.
 
 Assuming vertices arrive in some order, a heuristic makes a partition decision, given vertex $v$, and capacity constraint $C$ (where $C$ is generally $\approx \frac{(\epsilon+|V|)}{n}$ Stanton explores a number of heuristics (from simple to complex), and finds that a simple weighted greedy approach is most effective ~\cite{Stanton:2012:SGP:2339530.2339722}. This heuristic is as follows:
 
-\textbf{Weighted Deterministic Greedy (WDG):} Assign $v$ to partition that it has most edges to, weighted by the relative size of each partition (weight function can be linear or exponential).
+\textbf{Weighted Deterministic Greedy (WDG):} Assign $v$ to partition that it has most edges to, weighted by the relative size of each partition (weight function can be linear or exponential) More formally: 
+\[ ind=\argmax_{i\in [k]}\{|P_t(i) \cap \Gamma(v) | w(t,i)\} \]
 
-\subsection{Thoughts}
+$w(t,i)=1$ for unweighted greedy
+
+$w(t,i)=1-\frac{|P^t(i)|}{C} $for linear weighted
+
+$w(t,i)=1-\exp\{|P^t(i)|-C\} $for exponentially weighted
+
 This heuristic proves surprisingly effective for scale-free graphs, and can be competitive with leading offline implementations such as METIS, while operating at a much faster speed. The low diameter of scale-free graphs seems to make them easier to partition in this way (because as we process more and more nodes, the chance that an incoming node has neighbors that have already been partitioned becomes very high. This is not true for spatial, structured graphs). 
 
-An initial idea that Robert and I came up with was to \textit{re-stream} the partitioning: first, we do a single pass over the nodes, and then we do a second pass, re-assigning nodes to partitions that they have more neighbors to. (Alternatively, we can reassign nodes any time we encounter them in our algorithm). This turned out to be remarkably convergent and effective: after 4 passes, we had improved partition quality by a factor of 2-3. Unfortunately, I discovered a paper that implemented this, after we had already done our own implementation~\cite{Nishiura13}.
+Partitioning a 26GB Twitter follower graph can take nearly a day using METIS, but can take a matter of minutes using a streaming algorithm, with similar partition quality~\cite{tsourakakis2012fennel}. 
+
+\subsection{Thoughts}
+An initial idea that Robert Pienta and I came up with was to \textit{re-stream} the partitioning: first, we do a single pass over the nodes, and then we do a second pass, re-assigning nodes to partitions that they have more neighbors to. We could do multiple passes of a streaming partitioner (using the same or different heuristics) to further improve the partitioning, all in a fraction of the time that an offline partitioner would take to terminate.  This turned out to be remarkably convergent and effective: after 4 passes, we had improved partition quality from the baseline (1 pass) by a factor of 2-3. Unfortunately, I discovered a paper that implemented this, after we had already done our own implementation~\cite{Nishiura13}.
 
 \warning{Make graph of node-degree cutoff vs partition quality}
 
 \warning{Show re-streaming quality increase}
 
-\subsection{Implementation}
+\subsection{Results / Implementation}
+\subsubsection{Shared-Memory Streaming Partitioner}
 
-\section{Probabilistic Study of Graph Traversals}
+I implemented the generalized WDG partitioner FENNEL, and tested it on a wide variety of real-world and synthetic graphs. Our initial `test-bed' was implemented in MATLAB, because many important properties of graphs can be easily extracted using vector notation on their adjacency matrices. As we scaled to larger graphs, the outer for-loop in the code (which iterates over each vertex) began to take an infeasible amount of time, so I implemented a more fully-featured test-bed in C. The MATLAB and C code is located at~\url{https://github.com/cjbattagl/graphpart/}. The C code makes significant use of BeBoP's Sparse Matrix Converter:~\url{http://bebop.cs.berkeley.edu/smc/}.
+
+Our implementation can read graphs in three formats (Harwell-Boeing, Matlab, and Matrix-Market Formats). This allows us to read in the entire SNAP graph archive~\cite{Leskovec-data}. It can read in symmetric (undirected) and unsymmetric (directed) graphs. Once the graph is read in, we convert it from unordered triplet format to Compressed Sparse Row format, which allows us to iterate through the neighbor list of any node in linear time, as well as compute the degree of any node in constant time.
+
+Once we have our graph stored as a matrix in CSR form, we can perform a simulation of streaming $k-$partitioning. First we generate the traversal order of the graph (a random vertex order, which we generate using a Knuth Shuffle). We maintain a data structure that contains the assignment of every assigned vertex to its partition. Thus, for a given vertex, we can compute the number of edges from that vertex to each partition by iterating over each edge incident to the vertex. We also maintain a running total of vertices in each partition. This process lets us compute the FENNEL algorithm in $O(|E|)=O(nnz(A))$ time. 
+
+We measured the overall quality of partitions by the \textit{fraction of cut edges} $\lambda$.
+\begin{align}\lambda = \frac{\text{Number of edges cut by partition}}{\text{Total number of edges}}\end{align}
+
+In general, we can compare this to the expected quality of a random $k-$partition. To estimate this we just assume that each block has the same density of nonzeros, so we compute the fraction of nonzeros expected to be in non-diagonal blocks:
+\begin{align}\lambda_r = \frac{k^2 - k}{k^2} = \frac{k-1}{k} \end{align}
+
+Any partitioner that produces a partition with $\lambda < \lambda_r$ has thus improved the parallel locality of the graph ordering, so we present $\lambda_{r,k}$ along with our results.
+
+In Figure~\ref{table:big} we show the main properties of graphs in the SNAP database, as well as the performance of our streaming partitioner on them, for $k=2$ and $k=8$. 
+
+\begin{figure}
+\caption{Basic properties of graphs in SNAP data set~\cite{Leskovec-data}, and $\lambda$ for one pass. $\lambda_{r,2}=0.5,\lambda_{r,8}=0.87$}
+\rowcolors{2}{blue!05}{blue!15}
+\centering
+{ \begin{tabular}{ *7l }    \toprule
+\label{table:big}
+\emph{Data Set} & $N$ & $nnz$ & \emph{sym} & \emph{power-law?} & $\lambda, k=2$ & $\lambda, k=8$ \\\midrule 
+amazon0302 & 262111 & 1234877 & no & yes & 0.202&0.37\\ 
+amazon0312 & 400727 & 3200440 & no & yes & 0.212&0.38\\ 
+amazon0505 & 410236 & 3356824 & no & yes & 0.206&0.37\\ 
+amazon0601 & 403394 & 3387388 & no & yes & 0.203&0.36\\ 
+as-735 & 7716 & 26467 & yes & yes & 0.207&0.44\\ 
+as-Skitter & 1696415 & 22190596 & yes & yes & 0.166&0.324\\ 
+ca-AstroPh & 18772 & 396160 & yes & yes & 0.232&0.413\\ 
+ca-CondMat & 23133 & 186936 & yes & yes & 0.214&0.398\\ 
+ca-GrQc & 5242 & 28980 & yes & yes & 0.128&0.241\\ 
+ca-HepPh & 12008 & 237010 & yes & yes & 0.082&0.192\\ 
+ca-HepTh & 9877 & 51971 & yes & yes & 0.202&0.378\\ 
+cit-HepPh & 34546 & 421578 & no & yes & 0.343&0.646\\ 
+cit-HepTh & 27770 & 352807 & no & yes & 0.360&0.605\\ 
+cit-Patents & 3774768 & 16518948 & no & yes & 0.402&0.726\\ 
+email-Enron & 36692 & 367662 & yes & yes & 0.132&0.407\\ 
+email-EuAll & 265214 & 420045 & no & yes & 0.280&0.538\\ 
+Oregon-1 & 11492 & 46818 & yes & yes & 0.224&0.406\\ 
+Oregon-2 & 11806 & 65460 & no & yes & 0.185&0.429\\ 
+p2p-Gnutella04 & 10879 & 39994 & no & yes & 0.415&0.747\\ 
+roadNet-CA & 1971281 & 5533214 & yes & no & 0.186&0.36\\ 
+roadNet-PA & 1090920 & 3083796 & yes & no & 0.188&0.36\\ 
+roadNet-TX & 1393383 & 3843320 & yes & no & 0.185&0.358\\ 
+soc-Epinions1 & 75888 & 508837 & no & yes & 0.173&0.34\\ 
+soc-LiveJournal1 & 4847571 & 68993773 & no & yes &0.234& 0.463\\ 
+soc-sign-epinions & 131828 & 841372 & no & yes &0.173&0.34\\ 
+soc-Slashdot0811 & 77360 & 905468 & no & yes &0.179&0.417\\ 
+soc-Slashdot0902 & 82168 & 948464 & no & yes &0.236&0.382\\ 
+web-BerkStan & 685230 & 7600595 & no & yes &0.187&0.301\\ 
+web-Google & 916428 & 5105039 & no & yes &0.189&0.336\\ 
+web-NotreDame & 325729 & 1497134 & no & yes &0.204&0.345\\ 
+web-Stanford & 281903 & 2312497 & no & yes &0.154&0.34\\ 
+wiki-Talk & 2394385 & 5021410 & no & yes &0.411&0.752\\ 
+wiki-Vote  & 8297 & 103689 & no & yes &0.409&0.688\\ 
+ \hline
+\end{tabular}\par
+}
+\end{figure}
+
+\subsubsection{Distributed Memory Streaming Partitioner}
+I implemented a streaming partitioner for distributed memory using MPI.
+
+\begin{enumerate}
+\item The vertices of the graph are logically mapped in a block partitioning to each process.
+\item The vertices (row pointers) and associated edges (nnzs) are communicated to each process.
+\item Partitioning begins. After a chunk of vertices has been partitioned, its partition is \textit{scattered} to all vertices so that the greedy function can be computed.
+\item Upon termination, partitioning can either restart (re-streaming), or the graph can be redistributed.
+\end{enumerate}
+
+The main communication step of the algorithm is the scatter operation. A vector of size $n$ maps each node to a partition, and over the course of the partitioning algorithm, it must be scattered to all nodes. Only $O(n)$ memory must be scattered overall.
+
+Re-streaming also incurs this communication step. Finally, the post-processing step redistributes the graph in what is essentially an all-to-all personalized communication. 
+
+As far as I can tell this is the first distributed implementation of streaming partitioning, and if released would be the first publicly available streaming partitioner. Since it's written in C/MPI it would likely be the fastest. 
+
+\warning{TODO: Benchmark this partitioner within several BFS-intensive kernels on a NERSC machine}
+
+\subsubsection{Re-streaming Results}
+
+\subsubsection{Sampling Streaming Partitioning}
+I implemented a sampling streaming partitioning scheme that randomly samples some percentage of the edges adjacent to any given node. While the quality of the partitions appeared to be fairly stable, there are two issues that made me decide not to do any further experimentation:
+
+\begin{enumerate}
+\item The speed benefit was not very large (only 1.2-1.3 times faster), due to unstrided accesses. 
+\item Since we're streaming the entire graph, we're already going over all of the nnz's, so there's not really any loss in considering all edges. \end{enumerate}
+
+I guess it's not unthinkable that we'd find some scenario where this would be worthwhile approach, though.
 
 
-\section{Distributed Scale-Free Graph Traversals}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Sec2
+
+
+\newpage \section{Optimizing Distributed Scale-Free Graph Traversals}
 Goal: a communication pattern that optimizes distributed graph traversals.
 
-\section{Other Open Questions}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Sec3
+
+\newpage \section{Formalizing Characteristics of Graph Traversals}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Sec4
+
+\newpage \section{Other Open Questions}
 
 \warning{Approximate graph algorithms (sampling) -- power-reduction}
 
 
+\newpage \section{TODO}
+\warning{TODO: Benchmark distributed partitioner within several BFS-intensive kernels on a NERSC machine}
 
 
 \bibliographystyle{plain}
