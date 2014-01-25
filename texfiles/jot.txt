@@ -5,4 +5,8 @@ Social graphs should be more tolerant of this?
 0. Recognize the more power-consuming aspects of graph traversal. (Obv things that result in communication). 
 1. Define a metric of correctness (QoS) of a SSSP result (i.e, difference of distance vector).
 2. Sample the exact results vs. results with nodes removed. Remove nodes from following distributions: a. uniform random b. random across degrees c. only from low degree c. random across betw. centrality d. only from low betw. centrality
-3. Nodes with high betw. centrality are clearly the worst to skip over. Can we use a heuristic to recognize these during computation? (i.e Bader, et al have approx betw centrality). 
+3. Nodes with high betw. centrality are clearly the worst to skip over. Can we use a heuristic to recognize these during computation? (i.e Bader, et al have approx betw centrality).
+4. How is this distinct from the class of heuristic graph searches (i.e A*)?
+5. Like... we can still compute exact results, just evaluate whether the skipped nodes result in massive updates at the end.
+6. So if we can make a convincing argument that the amount of back-tracking is a lot less energy-intensive than the act of traversing those nodes' neighbors at the beginning, we have a case.
+7. But can we do this without an absurd amount of theoretical machinery?
