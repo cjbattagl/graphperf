@@ -1,0 +1,8 @@
+Approximate Graph Traversals -- Minimizing Energy
+Skip nodes that have probability of returning already-visited neighbors.
+Social graphs should be more tolerant of this?
+
+0. Recognize the more power-consuming aspects of graph traversal. (Obv things that result in communication). 
+1. Define a metric of correctness (QoS) of a SSSP result (i.e, difference of distance vector).
+2. Sample the exact results vs. results with nodes removed. Remove nodes from following distributions: a. uniform random b. random across degrees c. only from low degree c. random across betw. centrality d. only from low betw. centrality
+3. Nodes with high betw. centrality are clearly the worst to skip over. Can we use a heuristic to recognize these during computation? (i.e Bader, et al have approx betw centrality). 
