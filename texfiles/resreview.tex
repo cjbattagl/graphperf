@@ -202,6 +202,10 @@ There are a couple of things left to do:
 
 I think there would be a massive appeal in showing that streaming graph partitioning has a `killer application,' i.e could be used to accelerate a large computation in industry. 
 
+
+\newpage \section{Quantifying Parallel Graph Performance}
+\subsection{Results}
+I have implemented Python code that reads in an arbitrary Matrix Market graph, performs a simulation, and returns the minimum number of edges communicated in a parallel graph traversal if the graph is evenly divided among $p$ processors, on a given ordering. I will present any interesting results in this section (i.e, importance of edge balance or vertex balance vs. edge cut, ideal 1D or 2D partitionings). If possible I will have a detailed enough model to be able to propose a scalability limit to $p$ (a number of nodes past which you are only wasting time or energy).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Sec2
 
 
