@@ -54,8 +54,8 @@ This document presents one section for each topic I've been exploring. Each sect
 The main topics (sections) are as follows:
 
 \begin{enumerate}
+\item \textbf{Scalable Distributed Power-Law Graph Computations}: Exploring a scheme for distributed-memory graph traversals that involves low-degree and high-degree nodes in different communication patterns (and leveraging the fact that low-degree nodes can be partitioned, in isolation, at much higher quality, for scale-free graphs). 
 \item \textbf{Distributed-Memory (Re-)Streaming Graph Partitioning}: Exploring streaming partitioning, implementing re-streaming partitioning (and then discovering it's already been done), implementing a shared-memory and distributed-memory streaming partitioner, discussion of quality of partitions. 
-\item \textbf{Optimizing Distributed Scale-Free Graph Traversals}: Exploring a scheme for distributed-memory graph traversals that involves low-degree and high-degree nodes in different communication patterns (and leveraging the fact that low-degree nodes can be partitioned, in isolation, at much higher quality, for scale-free graphs). 
 \item \textbf{Formalizing Characteristics of Graph Traversals}: Leveraging statistical qualities of random graph models to quantify the performance of algorithms operating upon them. 
 \item \textbf{Other Open Questions}: Other thoughts and possible directions.
 \end{enumerate}
@@ -63,7 +63,22 @@ The main topics (sections) are as follows:
 Finally, I reiterate over the main ``TODO'' points, which we can prioritize and add to as we see fit. 
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Sec1
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Sec2
+\newpage \section{Scalable Distributed Power-Law Graph Computations}
+\subsection{Overview}
+I would like to argue that, contrary to popular opinion, power-law graph computations can scale in the distributed setting. I present a tunable `1.5D' distributed representation of power-law graphs that has several beneficial properties.
+
+The 1.5D representation is divided into two sets, which are distributed in different ways: `low-degree' vertices, which are divided according to a `1D,' vertex-partitioned distribution, and `high-degree' vertices, which are divided into a `2D' edge-partition. The main high-level benefits of this approach are presented below:
+
+\begin{enumerate}
+\item The 1D block of low-degree vertices is far easier to partition, even using a simple streaming algorithm. This can be backed by a geometric argument. 
+\item This greatly reduces the communication volume incurred by adding low-degree vertices to the frontier.
+\item The 2D block of high-degree vertices can be partitioned among all processors, load-balancing the nonzeros.
+\item When adding high-degree vertices to the frontier, we only need to broadcast the vertex ID. 
+\item When removing high-degree vertices from the frontier, we have a purely node-local computation.
+\item The degree-cutoff gives us opportunities to create a tunable model to minimize computation.
+\end{enumerate}
+
 
 
 \newpage \section{Distributed-Memory (Re-)Streaming Graph Partitioning}
@@ -203,18 +218,13 @@ There are a couple of things left to do:
 I think there would be a massive appeal in showing that streaming graph partitioning has a `killer application,' i.e could be used to accelerate a large computation in industry. 
 
 
-\newpage \section{Quantifying Parallel Graph Performance}
-\subsection{Results}
-I have implemented Python code that reads in an arbitrary Matrix Market graph, performs a simulation, and returns the minimum number of edges communicated in a parallel graph traversal if the graph is evenly divided among $p$ processors, on a given ordering. I will present any interesting results in this section (i.e, importance of edge balance or vertex balance vs. edge cut, ideal 1D or 2D partitionings). If possible I will have a detailed enough model to be able to propose a scalability limit to $p$ (a number of nodes past which you are only wasting time or energy).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Sec2
 
 
-\newpage \section{Optimizing Distributed Scale-Free Graph Traversals}
-\subsection{Overview}
-Graph partitioning is already widely used to improve locality of computations, and a wide variety of methods exist~\cite{DBLP:journals/corr/BulucMSSS13}. 
 
-Goal: a communication pattern that optimizes distributed graph traversals.
-
+\newpage \section{Quantifying Parallel Graph Performance}
+\subsection{Results}
+I have implemented Python code that reads in an arbitrary Matrix Market graph, performs a simulation, and returns the minimum number of edges communicated in a parallel graph traversal if the graph is evenly divided among $p$ processors, on a given ordering. I will present any interesting results in this section (i.e, importance of edge balance or vertex balance vs. edge cut, ideal 1D or 2D partitionings). If possible I will have a detailed enough model to be able to propose a scalability limit to $p$ (a number of nodes past which you are only wasting time or energy).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Sec3
 
