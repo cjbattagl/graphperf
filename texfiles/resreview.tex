@@ -66,9 +66,9 @@ Finally, I reiterate over the main ``TODO'' points, which we can prioritize and 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Sec2
 \newpage \section{Scalable Distributed Power-Law Graph Computations}
 \subsection{Overview}
-I would like to argue that, contrary to popular opinion, power-law graph computations can scale in the distributed setting. I present a tunable `1.5D' distributed representation of power-law graphs that has several beneficial properties.
-
-The 1.5D representation is divided into two sets, which are distributed in different ways: `low-degree' vertices, which are divided according to a `1D,' vertex-partitioned distribution, and `high-degree' vertices, which are divided into a `2D' edge-partition. The main high-level benefits of this approach are presented below:
+ I present a tunable `1.5D' distributed representation of power-law graphs and use it to argue that, contrary to popular opinion, power-law graph computations can scale in the distributed setting.
+ 
+The 1.5D representation is divided into two subgraphs, which are distributed and computed on in different ways. We divide $G$ into `low-degree' vertices, which are divided according to a `1D,' vertex-partitioned distribution, and `high-degree' vertices, which are divided into a `2D' edge-partition. The main high-level benefits of this approach are presented below:
 
 \begin{enumerate}
 \item The 1D block of low-degree vertices is far easier to partition, even using a simple streaming algorithm. This can be backed by a geometric argument. 
@@ -79,7 +79,49 @@ The 1.5D representation is divided into two sets, which are distributed in diffe
 \item The degree-cutoff gives us opportunities to create a tunable model to minimize computation.
 \end{enumerate}
 
+Given a degree cutoff $d$ and $p$ nodes, we order the graph into two subgraphs $G_l, G_h$ such that $V(G_l) = \{v_0, v_1 \dots, v_{j-1}\}$, $V(G_h) = \{v_j, v_{j+1} \dots v_n\}$. 1D partition: we perform a $p$-way partitioning on $G_l$,  distributing the low-degree subgraph to $p$ processors. 2D Partition: The edges (nonzeros) of $G_h$ are also distributed to the $p$ processors such that edge $(u,v)$, where $u \in G_h, v \in G_l$ is distributed to $owner(v)$. 
 
+Fig.~\ref{fig:00} demonstrates a spy plot of this scheme. Fig.~\ref{fig:01} shows the percentage of nodes that are in $V(G_l)$ for different cutoff degrees on the graph `ca-AstroPh.' Fig.~\ref{fig:02} shows the edge cuts for the same cutoff degrees when partitioned by a basic streaming partitioner (FENNEL). 
+
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.50] {figures/litreview/astrophdeg}
+\caption[Caption for]{ca-AstroPh graph after 1.5D Partitioning. A simple streaming partitioning cuts only 8\% of the low-degree subgraph. Lowering $d$ to 30 reduces this cut to 2.5\%}
+\label{fig:00}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.50] {figures/litreview/pctnodes}
+\caption[Caption for]{Percent of nodes in the `low-degree' subgraph for different cutoff values.}
+\label{fig:01}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.50] {figures/litreview/edgecut}
+\caption[Caption for]{Edge-cut for the `low-degree' subgraph for different cutoff values, using a streaming partitioner.}
+\label{fig:02}
+\end{figure}
+
+I now describe how to perform a simple BFS on this distribution (more advanced queries, using a system similar to Ligra, would be an exciting extension of this, and might attract the database crowd).
+
+A traditional 1D distributed BFS (as described by Buluc, et al \cite{}) distributes its vertices, and all edges adjacent to those vertices to the same processor (like a horizontal partitioning of the adjacency matrix). The BFS maintains a `visited?' array which keeps track of which vertices have been visited, and a distance array, which keeps track of each node's distance from the starting vertex. (An algorithm may also keep track of parent nodes to later build a BFS tree). These vertices are distributed across processors. 
+
+In a single 1D BFS step, each process steps through all of its vertices at the current level of the tree and determines the set of unvisited vertices that are adjacent to them. Those vertices that belong to the same process incur no communication, while those that are owned by another process are sent to a send-buffer that communicates directly with that process. Each process then receives vertices sent in this manner from the other processes, and updates their own frontier / visited-array / distance-array. This continues until the frontier is empty.
+
+We see here that the volume of communication is proportional to the number of nonzeros that fall outside of the diagonal block. Thus, a partitioning that minimizes these nonzeros minimizes the critical communication step. 
+
+In a 1.5D BFS, we have two additional possibilities to consider (which occur with high probability!): a high-degree vertex is added to the frontier, and a high-degree vertex is removed from the frontier. 
+
+When a high-degree vertex is added to the frontier (i.e, when we traverse a low-degree vertex and return an unvisited high-degree vertex as one of its neighbors), we broadcast that vertex to all processes with a one-to-all primitive (because each process owns some of its edges). This unfortunately gives us two disadvantages:
+
+\begin{enumerate}
+\item It's likely that multiple processes will broadcast the same vertex at the same time. This is less efficient, and means we need a way of deciding which parent to choose (although a simple min operation suffices). If 10\% of our nodes are high-degree, this gives an upper-bound of $\frac{n}{10}p$ bytes broadcast, but the $p$ term would likely drop out if we were smart about things.
+\item We need to maintain a `visited' vector for the high-degree vertices, otherwise we will make unnecessary broadcasts. Fortunately, we can store this as a simple bit vector. If our graph has 100 billion nodes, which I believe is larger than any graph processed in the literature, and 10\% of nodes are high-degree, we only need to store 10 billion bits, or approximately 1 gigabyte. This bit vector is updated any time a broadcast is received, so it remains consistent. 
+\end{enumerate}
+
+When a high-degree vertex is removed from the frontier, we add all of its adjacent unvisited vertices to the frontier. For those vertices that are low-degree, this can be done without any communication, because each edge $(u,v)$ from a high- to low-degree vertex is already stored on the process that owns $v$. 
 
 \newpage \section{Distributed-Memory (Re-)Streaming Graph Partitioning}
 \subsection{Overview}
